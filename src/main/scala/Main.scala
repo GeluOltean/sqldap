@@ -21,5 +21,18 @@ object Main {
     val attribs: BasicAttributes = new BasicAttributes()
     val results: Iterator[SearchResult] = dirContext.search("dc=example,dc=com", attribs).asScala
     results.foreach(println(_))
+    // for basic queries the general structure would be
+    // SELECT [address] WHERE [condition] AND [condition]
+
+    // SELECT statement: fields are declared in a String array, which is then either used in the search() directly, or
+    // provided to a SearchControls object; since using SearchControls means we are unable to use
+    // javax.naming.directory.Attributes, we should probably go with directly providing the array to the method
+
+    // WHERE statement: to be translated into parameters for the DirContext.search() method;
+    // there are several implementations, including executing string queries; however, using a hashmap-like structure,
+    // in the form of javax.naming.directory.Attributes, is perhaps the easiest to parse and debug; if a user already
+    // knows the LDAP query language, they wouldn't have a reason to use this DSL in the first place
+    // NOTE: Wildcards are empty fields, not asterisks (which are the actual ldap standard)
+
   }
 }
