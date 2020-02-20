@@ -1,25 +1,28 @@
 import org.parboiled2.{CharPredicate, Parser, ParserInput}
 
+//noinspection TypeAnnotation since IntelliJ IDEA goes mad from lack of implicits on return types
 class SqlParser(val input: ParserInput) extends Parser {
-  protected def space = rule { zeroOrMore(atomic(" ")) }
+  protected def space = rule { oneOrMore(atomic(" ")) }
 
-  protected def chars = rule { oneOrMore(CharPredicate.AlphaNum) }
+  protected def maybeSpace = rule { zeroOrMore(atomic(" ")) }
 
-  protected def comma = rule { space ~ atomic(",") ~ space }
+  protected def chars = rule { oneOrMore(CharPredicate.AlphaNum)}
+
+  protected def comma = rule { maybeSpace ~ atomic(",") ~ maybeSpace }
 
   protected def fieldCondition = rule {
-    capture(chars) ~ space ~ atomic("=") ~ space ~ capture(chars) ~> { (key, value) => (key, value) }
+    zeroOrMore(atomic("and" | "AND" ) ~ space) ~ capture(chars) ~ maybeSpace ~ atomic("=") ~ maybeSpace ~ capture(chars) ~> { (key: String, value: String) => Tuple2(key, value) }
   }
 
   protected def select = rule {
-    atomic("SELECT" | "select") ~ space ~ capture(oneOrMore(CharPredicate.AlphaNum).separatedBy(comma)) ~> {field => field}
+    atomic("SELECT" | "select") ~ space ~ capture(oneOrMore(CharPredicate.AlphaNum).separatedBy(comma)) ~> { fields: String => fields.replace(" ", "").split(",") }
   }
 
   protected def where = rule {
-    atomic("WHERE" | "where") ~ oneOrMore(fieldCondition).separatedBy(comma) ~ space ~ atomic(";") ~ space ~> {conditions => conditions}
+    atomic("WHERE" | "where") ~ space ~ oneOrMore(fieldCondition).separatedBy(space) ~> { attributes: Seq[(String, String)] => attributes }
   }
 
   def selectStatement = rule {
-    capture(select) ~ capture(where) ~> { (fields, attributes) => (fields, attributes) }
+    select ~ space ~ where ~ atomic(";") ~> { (fields: Array[String], attributes: Seq[(String, String)]) => (fields, attributes)}
   }
 }
