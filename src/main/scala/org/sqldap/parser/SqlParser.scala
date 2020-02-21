@@ -26,6 +26,10 @@ class SqlParser(val input: ParserInput) extends Parser {
     zeroOrMore(atomic("and" | "AND" ) ~ space) ~ assignment
   }
 
+  protected[parser] def set = rule {
+    atomic("SET" | "set") ~ space ~ oneOrMore(assignment).separatedBy(comma)
+  }
+
   protected[parser] def select = rule {
     atomic("SELECT" | "select") ~ space ~ capture(oneOrMore(CharPredicate.AlphaNum).separatedBy(comma)) ~> { fields: String => ArraySeq.from(fields.replace(" ", "").split(",")) }
   }
