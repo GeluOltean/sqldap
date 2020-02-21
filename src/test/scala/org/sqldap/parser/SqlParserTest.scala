@@ -42,6 +42,13 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
     parseResult2.success.value should equal(Seq(("x", "y")))
   }
 
+  "Set" should "parse the attributes" in {
+    val parseResult = new SqlParser(f"SET ${attributes.map(tup=>f"${tup._1}=${tup._2}").reduce((x, y) => f"$x, $y")}")
+      .set
+      .run()
+    parseResult.success.value should equal(attributes)
+  }
+
   "The select statement" should "parse correctly into SelectStruct" in {
     val parseResult: Try[SelectStruct] = new SqlParser(f"SELECT $fieldsFormatted FROM $table WHERE $attributesFormatted;")
       .selectStatement
