@@ -12,7 +12,8 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
   val fieldsFormatted: String = fields.reduce((x, y) => f"$x,$y")
   val table: String = "table"
   val attributes: Seq[(String, String)] = Seq(("a", "A"), ("b", "B"))
-  val attributesFormatted: String = attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x AND $y")
+  val attributesAndFormatted: String = attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x AND $y")
+  val attributesCommaFormatted: String = attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x, $y")
 
   val expectedSelect: SelectStruct = SelectStruct(fields, table, attributes)
   val expectedDelete: DeleteStruct = DeleteStruct(table, attributes)
@@ -32,7 +33,7 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
   }
 
   "Where" should "parse the attributes" in {
-    val parseResult: Try[Seq[(String, String)]] = new SqlParser(f"WHERE $attributesFormatted")
+    val parseResult: Try[Seq[(String, String)]] = new SqlParser(f"WHERE $attributesAndFormatted")
       .where
       .run()
     parseResult.success.value should equal(attributes)
@@ -43,21 +44,21 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
   }
 
   "Set" should "parse the attributes" in {
-    val parseResult = new SqlParser(f"SET ${attributes.map(tup=>f"${tup._1}=${tup._2}").reduce((x, y) => f"$x, $y")}")
+    val parseResult = new SqlParser(f"SET $attributesCommaFormatted")
       .set
       .run()
     parseResult.success.value should equal(attributes)
   }
 
   "The select statement" should "parse correctly into SelectStruct" in {
-    val parseResult: Try[SelectStruct] = new SqlParser(f"SELECT $fieldsFormatted FROM $table WHERE $attributesFormatted;")
+    val parseResult: Try[SelectStruct] = new SqlParser(f"SELECT $fieldsFormatted FROM $table WHERE $attributesAndFormatted;")
       .selectStatement
       .run()
     parseResult.success.value should equal(expectedSelect)
   }
 
   "The delete statement" should "parse correctly into DeleteStruct" in {
-    val parseResult: Try[DeleteStruct] = new SqlParser(f"DELETE FROM $table WHERE $attributesFormatted;")
+    val parseResult: Try[DeleteStruct] = new SqlParser(f"DELETE FROM $table WHERE $attributesAndFormatted;")
       .deleteStatement
       .run()
     parseResult.success.value should equal(expectedDelete)
