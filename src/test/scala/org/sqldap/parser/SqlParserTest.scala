@@ -9,12 +9,14 @@ import scala.util.Try
 
 class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
   val fields: ArraySeq[String] = ArraySeq("e","f","g")
+  val fieldsFormatted: String = fields.reduce((x, y) => f"$x,$y")
   val table: String = "table"
   val attributes: Seq[(String, String)] = Seq(("a", "A"), ("b", "B"))
-  val expected: SelectStruct = SelectStruct(fields, table, attributes)
+  val attributesFormatted: String = attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x AND $y")
+  val expectedSelect: SelectStruct = SelectStruct(fields, table, attributes)
 
   "Select" should "parse the selected fields" in {
-    val parseResult: Try[ArraySeq[String]] = new SqlParser(f"SELECT ${fields.reduce((x, y) => f"$x,$y")}")
+    val parseResult: Try[ArraySeq[String]] = new SqlParser(f"SELECT $fieldsFormatted")
       .select
       .run()
     parseResult.success.value should equal(fields)
@@ -28,18 +30,20 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
   }
 
   "Where" should "parse the attributes" in {
-    val parseResult: Try[Seq[(String, String)]] = new SqlParser(f"WHERE ${attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x AND $y")}")
+    val parseResult: Try[Seq[(String, String)]] = new SqlParser(f"WHERE $attributesFormatted")
       .where
       .run()
     parseResult.success.value should equal(attributes)
+    val parseResult2: Try[Seq[(String, String)]] = new SqlParser("WHERE x = y")
+      .where
+      .run()
+    parseResult2.success.value should equal(Seq(("x", "y")))
   }
 
   "The select statement" should "parse correctly into SelectStruct" in {
-    val parseResult: Try[SelectStruct] = new SqlParser(f"SELECT ${fields.reduce((x, y) => f"$x,$y")} FROM $table " +
-      f"WHERE ${attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x AND $y")}" +
-      ";")
+    val parseResult: Try[SelectStruct] = new SqlParser(f"SELECT $fieldsFormatted FROM $table WHERE $attributesFormatted;")
       .selectStatement
       .run()
-    parseResult.success.value should equal(expected)
+    parseResult.success.value should equal(expectedSelect)
   }
 }
