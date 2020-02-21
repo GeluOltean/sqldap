@@ -4,7 +4,9 @@ import org.parboiled2.{CharPredicate, Parser, ParserInput}
 
 import scala.collection.immutable.ArraySeq
 
-case class SelectStruct(fields: ArraySeq[String], table: String, attributes: Seq[(String, String)])
+sealed trait ParsedStruct
+case class SelectStruct(fields: ArraySeq[String], table: String, attributes: Seq[(String, String)]) extends ParsedStruct
+case class DeleteStruct(table: String, attributes: Seq[(String, String)]) extends ParsedStruct
 
 //noinspection TypeAnnotation since IntelliJ IDEA goes mad from lack of implicits on return types
 class SqlParser(val input: ParserInput) extends Parser {
@@ -34,5 +36,9 @@ class SqlParser(val input: ParserInput) extends Parser {
 
   def selectStatement = rule {
     select ~ space ~ from ~ space ~ where ~ atomic(";") ~> { (fields: ArraySeq[String], table: String, attributes: Seq[(String, String)]) => SelectStruct(fields, table, attributes)}
+  }
+
+  def deleteStatement = rule {
+    atomic("DELETE" | "delete") ~ space ~ from ~ space ~ where ~ atomic(";") ~> { (table: String, attributes: Seq[(String, String)]) => DeleteStruct(table, attributes)}
   }
 }
