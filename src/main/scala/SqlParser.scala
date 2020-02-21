@@ -2,6 +2,8 @@ import org.parboiled2.{CharPredicate, Parser, ParserInput}
 
 import scala.collection.immutable.ArraySeq
 
+case class SelectStruct(fields: ArraySeq[String], table: String, attributes: Seq[(String, String)])
+
 //noinspection TypeAnnotation since IntelliJ IDEA goes mad from lack of implicits on return types
 class SqlParser(val input: ParserInput) extends Parser {
   protected def space = rule { oneOrMore(atomic(" ")) }
@@ -29,6 +31,6 @@ class SqlParser(val input: ParserInput) extends Parser {
   }
 
   def selectStatement = rule {
-    select ~ space ~ where ~ atomic(";") ~> { (fields: ArraySeq[String], attributes: Seq[(String, String)]) => (fields, attributes)}
+    select ~ space ~ from ~ space ~ where ~ atomic(";") ~> { (fields: ArraySeq[String], table: String, attributes: Seq[(String, String)]) => SelectStruct(fields, table, attributes)}
   }
 }
