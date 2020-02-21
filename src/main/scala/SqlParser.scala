@@ -1,5 +1,7 @@
 import org.parboiled2.{CharPredicate, Parser, ParserInput}
 
+import scala.collection.immutable.ArraySeq
+
 //noinspection TypeAnnotation since IntelliJ IDEA goes mad from lack of implicits on return types
 class SqlParser(val input: ParserInput) extends Parser {
   protected def space = rule { oneOrMore(atomic(" ")) }
@@ -15,7 +17,7 @@ class SqlParser(val input: ParserInput) extends Parser {
   }
 
   protected def select = rule {
-    atomic("SELECT" | "select") ~ space ~ capture(oneOrMore(CharPredicate.AlphaNum).separatedBy(comma)) ~> { fields: String => fields.replace(" ", "").split(",") }
+    atomic("SELECT" | "select") ~ space ~ capture(oneOrMore(CharPredicate.AlphaNum).separatedBy(comma)) ~> { fields: String => ArraySeq.from(fields.replace(" ", "").split(",")) }
   }
 
   protected def where = rule {
@@ -23,6 +25,6 @@ class SqlParser(val input: ParserInput) extends Parser {
   }
 
   def selectStatement = rule {
-    select ~ space ~ where ~ atomic(";") ~> { (fields: Array[String], attributes: Seq[(String, String)]) => (fields, attributes)}
+    select ~ space ~ where ~ atomic(";") ~> { (fields: ArraySeq[String], attributes: Seq[(String, String)]) => (fields, attributes)}
   }
 }
