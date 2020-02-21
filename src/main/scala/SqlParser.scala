@@ -20,6 +20,10 @@ class SqlParser(val input: ParserInput) extends Parser {
     atomic("SELECT" | "select") ~ space ~ capture(oneOrMore(CharPredicate.AlphaNum).separatedBy(comma)) ~> { fields: String => ArraySeq.from(fields.replace(" ", "").split(",")) }
   }
 
+  protected def from = rule {
+    atomic("FROM" | "from") ~ space ~ capture(chars) ~> { table: String => table }
+  }
+
   protected def where = rule {
     atomic("WHERE" | "where") ~ space ~ oneOrMore(fieldCondition).separatedBy(space) ~> { attributes: Seq[(String, String)] => attributes }
   }
