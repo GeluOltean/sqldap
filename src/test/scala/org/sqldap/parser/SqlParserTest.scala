@@ -17,6 +17,7 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
 
   val expectedSelect: SelectStruct = SelectStruct(fields, table, attributes)
   val expectedDelete: DeleteStruct = DeleteStruct(table, attributes)
+  val expectedUpdate: UpdateStruct = UpdateStruct(table, attributes, attributes)
 
   "Select" should "parse the selected fields" in {
     val parseResult: Try[ArraySeq[String]] = new SqlParser(f"SELECT $fieldsFormatted")
@@ -62,5 +63,12 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
       .deleteStatement
       .run()
     parseResult.success.value should equal(expectedDelete)
+  }
+
+  "The update statement" should "parse correctly into UpdateStruct" in {
+    val parseResult = new SqlParser(f"UPDATE $table SET $attributesCommaFormatted WHERE $attributesAndFormatted;")
+      .updateStatement
+      .run()
+    parseResult.success.value should equal(expectedUpdate)
   }
 }
