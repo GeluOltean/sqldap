@@ -18,8 +18,12 @@ class SqlParser(val input: ParserInput) extends Parser {
 
   protected[parser] def comma = rule { maybeSpace ~ atomic(",") ~ maybeSpace }
 
+  protected[parser] def assignment = rule {
+    capture(chars) ~ maybeSpace ~ atomic("=") ~ maybeSpace ~ capture(chars) ~> { (key: String, value: String) => Tuple2(key, value) }
+  }
+
   protected[parser] def fieldCondition = rule {
-    zeroOrMore(atomic("and" | "AND" ) ~ space) ~ capture(chars) ~ maybeSpace ~ atomic("=") ~ maybeSpace ~ capture(chars) ~> { (key: String, value: String) => Tuple2(key, value) }
+    zeroOrMore(atomic("and" | "AND" ) ~ space) ~ assignment
   }
 
   protected[parser] def select = rule {
