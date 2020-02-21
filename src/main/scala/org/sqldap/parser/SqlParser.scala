@@ -8,6 +8,7 @@ sealed trait ParsedStruct
 case class SelectStruct(fields: ArraySeq[String], table: String, attributes: Seq[(String, String)]) extends ParsedStruct
 case class DeleteStruct(table: String, attributes: Seq[(String, String)]) extends ParsedStruct
 case class UpdateStruct(table: String, setAttributes: Seq[(String, String)], attributes: Seq[(String, String)]) extends ParsedStruct
+case class InsertStruct(table: String, columnsToValues: Seq[(String, String)]) extends ParsedStruct
 
 //noinspection TypeAnnotation since IntelliJ IDEA goes mad from lack of implicits on return types
 class SqlParser(val input: ParserInput) extends Parser {
@@ -21,6 +22,10 @@ class SqlParser(val input: ParserInput) extends Parser {
 
   protected[parser] def assignment = rule {
     capture(chars) ~ maybeSpace ~ atomic("=") ~ maybeSpace ~ capture(chars) ~> { (key: String, value: String) => Tuple2(key, value) }
+  }
+
+  protected[parser] def valuesInParens = rule {
+    atomic("(") ~ capture(oneOrMore(chars).separatedBy(comma)) ~ atomic(")") ~> { entry => ArraySeq.from(entry.replace(" ", "").split(",")) }
   }
 
   protected[parser] def fieldCondition = rule {
@@ -53,5 +58,9 @@ class SqlParser(val input: ParserInput) extends Parser {
 
   def updateStatement = rule {
     atomic("UPDATE" | "update") ~ space ~ capture(chars) ~ space ~ set ~ space ~ where ~ atomic(";") ~> { (table: String, setAttributes: Seq[(String, String)], attributes: Seq[(String, String)]) => UpdateStruct(table, setAttributes, attributes)}
+  }
+
+  def insertStatement = rule {
+    atomic("INSERT" | "insert") ~ space ~ atomic("INTO" | "into") ~ space ~ capture(chars) ~ maybeSpace ~ valuesInParens ~ space ~ atomic("VALUES" | "values") ~ space ~valuesInParens ~ atomic(";") ~> { (table: String, columns: Seq[String], values: Seq[String]) => InsertStruct(table, columns.zip(values)) }
   }
 }
