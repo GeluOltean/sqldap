@@ -1,6 +1,8 @@
+package org.sqldap.parser
+
+import org.scalatest.TryValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.TryValues
 
 import scala.collection.immutable.ArraySeq
 import scala.util.Try

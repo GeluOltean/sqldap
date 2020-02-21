@@ -1,3 +1,5 @@
+package org.sqldap.parser
+
 import org.parboiled2.{CharPredicate, Parser, ParserInput}
 
 import scala.collection.immutable.ArraySeq
