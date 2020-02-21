@@ -7,6 +7,7 @@ import scala.collection.immutable.ArraySeq
 sealed trait ParsedStruct
 case class SelectStruct(fields: ArraySeq[String], table: String, attributes: Seq[(String, String)]) extends ParsedStruct
 case class DeleteStruct(table: String, attributes: Seq[(String, String)]) extends ParsedStruct
+case class UpdateStruct(table: String, setAttributes: Seq[(String, String)], attributes: Seq[(String, String)]) extends ParsedStruct
 
 //noinspection TypeAnnotation since IntelliJ IDEA goes mad from lack of implicits on return types
 class SqlParser(val input: ParserInput) extends Parser {
@@ -48,5 +49,9 @@ class SqlParser(val input: ParserInput) extends Parser {
 
   def deleteStatement = rule {
     atomic("DELETE" | "delete") ~ space ~ from ~ space ~ where ~ atomic(";") ~> { (table: String, attributes: Seq[(String, String)]) => DeleteStruct(table, attributes)}
+  }
+
+  def updateStatement = rule {
+    atomic("UPDATE" | "update") ~ space ~ capture(chars) ~ space ~ set ~ space ~ where ~ atomic(";") ~> { (table: String, setAttributes: Seq[(String, String)], attributes: Seq[(String, String)]) => UpdateStruct(table, setAttributes, attributes)}
   }
 }
