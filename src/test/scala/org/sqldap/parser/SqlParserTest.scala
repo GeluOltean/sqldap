@@ -14,10 +14,13 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
   val attributes: Seq[(String, String)] = Seq(("a", "A"), ("b", "B"))
   val attributesAndFormatted: String = attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x AND $y")
   val attributesCommaFormatted: String = attributes.map(tup => f"${tup._1} = ${tup._2}").reduce((x, y) => f"$x, $y")
+  val columns: Seq[String] = Seq("col1", "col2")
+  val columnsCommaFormatted: String = columns.reduce((x, y) => f"$x, $y")
 
   val expectedSelect: SelectStruct = SelectStruct(fields, table, attributes)
   val expectedDelete: DeleteStruct = DeleteStruct(table, attributes)
   val expectedUpdate: UpdateStruct = UpdateStruct(table, attributes, attributes)
+  val expectedInsert: InsertStruct = InsertStruct(table, columns.zip(columns))
 
   "Select" should "parse the selected fields" in {
     val parseResult: Try[ArraySeq[String]] = new SqlParser(f"SELECT $fieldsFormatted")
@@ -66,9 +69,16 @@ class SqlParserTest extends AnyFlatSpec with Matchers with TryValues {
   }
 
   "The update statement" should "parse correctly into UpdateStruct" in {
-    val parseResult = new SqlParser(f"UPDATE $table SET $attributesCommaFormatted WHERE $attributesAndFormatted;")
+    val parseResult: Try[UpdateStruct] = new SqlParser(f"UPDATE $table SET $attributesCommaFormatted WHERE $attributesAndFormatted;")
       .updateStatement
       .run()
     parseResult.success.value should equal(expectedUpdate)
+  }
+
+  "The insert statement" should "parse correctly into InsertStruct" in {
+    val parseResult: Try[InsertStruct] = new SqlParser(f"INSERT INTO $table ($columnsCommaFormatted) VALUES ($columnsCommaFormatted);")
+      .insertStatement
+      .run()
+    parseResult.success.value should equal(expectedInsert)
   }
 }
